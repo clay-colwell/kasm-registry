@@ -1,5 +1,5 @@
 {
-  "description": "Forescout Console (8.5.5), packaged for Kasm Workspaces. Select the compatibility entry matching your Kasm deployment.",
+  "description": "Forescout Console (8.5.5), packaged for Kasm Workspaces.",
   "docker_registry": "https://ghcr.io",
   "image_src": "Icon.png",
   "categories": [
