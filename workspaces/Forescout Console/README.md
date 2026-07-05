@@ -32,7 +32,7 @@ To regenerate metadata locally:
 python3 scripts/generate_forescout_workspaces.py
 ```
 
-## Forescout Console Kasm workspace
+## Customizing Workspace for your Environment
 
 To make it easier for users to use the Forescout Console in your environment, you may wish to utilize the File Mappings feature on the workspace config to update the Console launcher shortcut to autologin to your local Forescout Console instance, create a shortcut to the Web Dashboard, pre-load `local.properties` (to avoid the redundant JRE update check on login and set other preferences) and `login.fingerprint.properties` (to avoid the fingerprint prompt on initial login). 
 
