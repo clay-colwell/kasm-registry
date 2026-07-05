@@ -60,17 +60,6 @@ jobs:
         name: Generate build matrix
         run: echo "matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix)" >> "$GITHUB_OUTPUT"
 
-      - name: Commit generated registry workspaces
-        if: github.event_name == 'push'
-        run: |
-          if [[ -n "$(git status --short -- 'workspaces/Forescout Console/generated')" ]]; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add 'workspaces/Forescout Console/generated'
-            git commit -m 'chore: generate Forescout workspaces'
-            git push
-          fi
-
   build:
     needs: prepare
     if: needs.prepare.outputs.run_builds == 'true'
@@ -128,3 +117,64 @@ jobs:
             org.opencontainers.image.version=${{ matrix.tag }}
           cache-from: type=gha,scope=${{ matrix.console_version }}-${{ matrix.tag }}
           cache-to: type=gha,mode=max,scope=${{ matrix.console_version }}-${{ matrix.tag }}
+
+      - name: Record uncompressed image size
+        env:
+          TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
+          WORKSPACE_FILE: workspaces/Forescout Console/generated/${{ matrix.console_version }}/workspace.json
+          IMAGE_CHANGED: ${{ steps.digest.outputs.changed }}
+        run: |
+          existing_size=$(jq --arg image "$TARGET_IMAGE" \
+            '[.compatibility[]? | select(.image == $image) | .uncompressed_size_mb][0] // 0' \
+            "$WORKSPACE_FILE" 2>/dev/null || echo 0)
+          if [[ "$IMAGE_CHANGED" == true || "$existing_size" == 0 ]]; then
+            docker pull "$TARGET_IMAGE"
+            size_bytes=$(docker image inspect --format '{{.Size}}' "$TARGET_IMAGE")
+            size_mb=$(( (size_bytes + 500000) / 1000000 ))
+          else
+            size_mb=$existing_size
+          fi
+          mkdir -p image-size
+          jq -n --arg image "$TARGET_IMAGE" --argjson size "$size_mb" \
+            '{image: $image, uncompressed_size_mb: $size}' \
+            > "image-size/${{ matrix.console_version }}-${{ matrix.kasm_version }}.json"
+
+      - name: Upload image-size record
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-size-${{ matrix.console_version }}-${{ matrix.kasm_version }}
+          path: image-size/*.json
+          retention-days: 1
+
+  publish-metadata:
+    needs:
+      - prepare
+      - build
+    if: needs.prepare.outputs.run_builds == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download image-size records
+        uses: actions/download-artifact@v4
+        with:
+          pattern: image-size-*
+          path: image-sizes
+          merge-multiple: true
+
+      - name: Generate workspaces and apply published image sizes
+        run: |
+          python3 scripts/generate_forescout_workspaces.py
+          python3 scripts/generate_forescout_workspaces.py --sizes-dir image-sizes
+
+      - name: Commit generated registry workspaces
+        run: |
+          if [[ -n "$(git status --short -- 'workspaces/Forescout Console/generated')" ]]; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add 'workspaces/Forescout Console/generated'
+            git commit -m 'chore: update Forescout workspace metadata'
+            git push
+          fi

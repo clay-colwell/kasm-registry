@@ -79,11 +79,23 @@ def generate(config):
         expected.add(destination)
         destination.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(WORKSPACE_ROOT / "Icon.png", destination / "Icon.png")
+        workspace_path = destination / "workspace.json"
+        existing_sizes = {}
+        if workspace_path.exists():
+            with workspace_path.open(encoding="utf-8") as stream:
+                existing = json.load(stream)
+            existing_sizes = {
+                item["image"]: item.get("uncompressed_size_mb", 0)
+                for item in existing.get("compatibility", [])
+            }
         compatibility = [
             {
                 "version": item["version"],
                 "image": f"{image_name(config, console_version)}:{image_tag(item['version'])}",
-                "uncompressed_size_mb": 0,
+                "uncompressed_size_mb": existing_sizes.get(
+                    f"{image_name(config, console_version)}:{image_tag(item['version'])}",
+                    0,
+                ),
             }
             for item in config["kasm_versions"]
         ]
@@ -101,7 +113,7 @@ def generate(config):
             "memory": 4096,
             "compatibility": compatibility,
         }
-        with (destination / "workspace.json").open("w", encoding="utf-8") as stream:
+        with workspace_path.open("w", encoding="utf-8") as stream:
             json.dump(workspace, stream, indent=2)
             stream.write("\n")
 
@@ -110,14 +122,46 @@ def generate(config):
             shutil.rmtree(path)
 
 
+def update_sizes(sizes_dir):
+    sizes = {}
+    for record_path in sizes_dir.glob("*.json"):
+        with record_path.open(encoding="utf-8") as stream:
+            record = json.load(stream)
+        sizes[record["image"]] = record["uncompressed_size_mb"]
+
+    if not sizes:
+        raise SystemExit(f"No image-size records found in {sizes_dir}")
+
+    updated = set()
+    for workspace_path in GENERATED_ROOT.glob("*/workspace.json"):
+        with workspace_path.open(encoding="utf-8") as stream:
+            workspace = json.load(stream)
+        for item in workspace.get("compatibility", []):
+            if item["image"] in sizes:
+                item["uncompressed_size_mb"] = sizes[item["image"]]
+                updated.add(item["image"])
+        with workspace_path.open("w", encoding="utf-8") as stream:
+            json.dump(workspace, stream, indent=2)
+            stream.write("\n")
+
+    missing = set(sizes) - updated
+    if missing:
+        raise SystemExit(f"No workspace entries found for: {', '.join(sorted(missing))}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--matrix", action="store_true", help="print the Actions matrix only"
     )
+    parser.add_argument(
+        "--sizes-dir", type=Path, help="apply downloaded image-size records"
+    )
     args = parser.parse_args()
     config = load_config()
-    if args.matrix:
+    if args.sizes_dir:
+        update_sizes(args.sizes_dir)
+    elif args.matrix:
         print(json.dumps(build_matrix(config), separators=(",", ":")))
     else:
         generate(config)

@@ -15,6 +15,15 @@ WORKDIR $HOME
 LABEL org.opencontainers.image.title="Forescout Console for Kasm Workspaces" \
       org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
+RUN dnf upgrade -y \
+    && dnf install -y chromium \
+    && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/oracle/install/vs_code/install_vs_code.sh -O /tmp/install_vs_code.sh \
+    && DISTRO=fedora43 SKIP_CLEAN=1 bash /tmp/install_vs_code.sh \
+    && rm -f /tmp/install_vs_code.sh \
+    && dnf clean all \
+    && mkdir -p ~/.config/xfce4 \
+    && echo "WebBrowser=chromium" > ~/.config/xfce4/helpers.rc
+
 COPY ["workspaces/Forescout Console/Background.png", "/usr/share/backgrounds/bg_default.png"]
 COPY ["workspaces/Forescout Console/xfce4/*", "/home/kasm-default-profile/.config/xfce4/xfconf/xfce-perchannel-xml/"]
 COPY ["workspaces/Forescout Console/console/${CONSOLE_ARCHIVE}", "/tmp/forescout-console.tar.gz"]
@@ -29,7 +38,7 @@ COPY ["workspaces/Forescout Console/desktop/*", "/home/kasm-default-profile/Desk
 RUN find "$HOME/Desktop" -name "*.desktop" -type f -exec chmod 0755 {} + \
     && chown -R 1000:1000 "$HOME/Desktop" "$HOME/Forescout Console" \
     && chmod +x "$HOME/Forescout Console/GuiManager/current/Forescout Console" \
-    && echo "/usr/bin/desktop_ready && xdg-open \$HOME/Desktop/forescout.desktop" > "$STARTUPDIR/custom_startup.sh" \
+    && echo "/usr/bin/desktop_ready && eval \$(grep '^Exec=' \"\$HOME/Desktop/forescout.desktop\" | tail -1 | sed 's/^Exec=//' | sed 's/%[fFuU]//g') &" > "$STARTUPDIR/custom_startup.sh" \
     && chmod 0755 "$STARTUPDIR/custom_startup.sh" \
     && chown 1000:0 "$HOME" \
     && "$STARTUPDIR/set_user_permission.sh" "$HOME"
