@@ -92,7 +92,7 @@ StartupNotify=true
 
 ### local.properties
 
-This file is used to create a shortcut on the desktop to go to the Forescout Web Dashboard.
+This file is used the console for various preferences, to avoid the redundant JRE update check on login. Pre-fill with your preferences so the console feels at home, even on a fresh Kasm instance.
 - Enabled: `True`
 - Type: `Text`
 - Name: `local.properties`
@@ -111,7 +111,7 @@ fs.java.version.home=jre1.8.0_442-3
 
 ### login.fingerprint.properties
 
-This file is used by the console to remember what EMs it has already connected to. Pre-fill with your actualy EM Fingerprint to stop the "Do you trust this server" dialog when connecting to your EM with a Fresh console install.
+This file is used by the console to remember what EMs it has already connected to. Pre-fill with your actualy EM Fingerprint to stop the "Do you trust this server" dialog when connecting to your EM with a fresh Kasm instance.
 - Enabled: `True`
 - Type: `Text`
 - Name: `login.fingerprint.properties`
