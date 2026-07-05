@@ -40,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           lfs: true
 
       - id: time
@@ -58,7 +59,40 @@ jobs:
 
       - id: matrix
         name: Generate build matrix
-        run: echo "matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix)" >> "$GITHUB_OUTPUT"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          matrix_args=()
+          shared_input_changed=false
+
+          if [[ "$EVENT_NAME" == push ]]; then
+            changed_files() {
+              if git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+                git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA"
+              else
+                git diff-tree --root --no-commit-id --name-only -z -r "$GITHUB_SHA"
+              fi
+            }
+            while IFS= read -r -d '' file; do
+              case "$file" in
+                workspaces/Forescout\ Console/console/*.tar.gz)
+                  version=${file##*/}
+                  matrix_args+=(--console-version "${version%.tar.gz}")
+                  ;;
+                workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|.github/workflows/forescout-console-images.yml)
+                  shared_input_changed=true
+                  ;;
+              esac
+            done < <(changed_files)
+          fi
+
+          if [[ "$shared_input_changed" == true ]]; then
+            matrix_args=()
+          fi
+
+          matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix "${matrix_args[@]}")
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare

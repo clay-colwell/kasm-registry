@@ -18,6 +18,8 @@ On a matching push, GitHub Actions:
 The same workflow checks the upstream rolling-weekly images every Monday at
 03:00 America/New_York. It compares the current base manifest digest with the
 digest recorded on the published image and skips unchanged combinations.
+An archive-only push builds only the Console versions whose `.tar.gz` files
+changed. Changes to shared image inputs rebuild every Console version.
 
 The repository must allow GitHub Actions to read/write repository contents and
 packages. Make the GHCR package public if Kasm should pull it without registry

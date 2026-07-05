@@ -54,7 +54,8 @@ def image_tag(kasm_version):
     return f"{kasm_version}-rolling-weekly"
 
 
-def build_matrix(config):
+def build_matrix(config, console_versions=None):
+    selected = set(console_versions or [])
     return {
         "include": [
             {
@@ -66,6 +67,7 @@ def build_matrix(config):
                 "tag": image_tag(item["version"]),
             }
             for console_version, archive in archives()
+            if not selected or console_version in selected
             for item in config["kasm_versions"]
         ]
     }
@@ -157,12 +159,22 @@ def main():
     parser.add_argument(
         "--sizes-dir", type=Path, help="apply downloaded image-size records"
     )
+    parser.add_argument(
+        "--console-version",
+        action="append",
+        default=[],
+        help="limit the build matrix to this Console version (repeatable)",
+    )
     args = parser.parse_args()
     config = load_config()
     if args.sizes_dir:
         update_sizes(args.sizes_dir)
     elif args.matrix:
-        print(json.dumps(build_matrix(config), separators=(",", ":")))
+        print(
+            json.dumps(
+                build_matrix(config, args.console_version), separators=(",", ":")
+            )
+        )
     else:
         generate(config)
 
