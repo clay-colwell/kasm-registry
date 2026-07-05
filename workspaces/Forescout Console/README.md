@@ -9,8 +9,9 @@ On a matching push, GitHub Actions:
 
 1. validates every archive and generates one registry workspace per version;
 2. builds an amd64 image for each Kasm/base-image combination;
-3. publishes explicit tags such as `8.5.5-kasm-1.19.0` to
-   `ghcr.io/clay-colwell/forescout-console`; and
+3. publishes one GHCR repository per Console version, using explicit Kasm tags
+   such as `ghcr.io/clay-colwell/forescout-console-8.5.5:1.19.0-rolling-weekly`;
+   and
 4. commits the generated workspace metadata, which triggers the existing
    registry site deployment.
 

@@ -47,8 +47,12 @@ def validate_archive(archive):
                 )
 
 
-def image_tag(console_version, kasm_version):
-    return f"{console_version}-kasm-{kasm_version}"
+def image_name(config, console_version):
+    return f'{config["image_prefix"]}{console_version}'
+
+
+def image_tag(kasm_version):
+    return f"{kasm_version}-rolling-weekly"
 
 
 def build_matrix(config):
@@ -59,8 +63,8 @@ def build_matrix(config):
                 "console_archive": archive,
                 "kasm_version": item["version"],
                 "base_image": item["base"],
-                "image": config["image"],
-                "tag": image_tag(console_version, item["version"]),
+                "image": image_name(config, console_version),
+                "tag": image_tag(item["version"]),
             }
             for console_version, archive in archives()
             for item in config["kasm_versions"]
@@ -79,7 +83,7 @@ def generate(config):
         compatibility = [
             {
                 "version": item["version"],
-                "image": f'{config["image"]}:{image_tag(console_version, item["version"])}',
+                "image": f'{image_name(config, console_version)}:{image_tag(item["version"])}',
                 "uncompressed_size_mb": 0,
             }
             for item in config["kasm_versions"]

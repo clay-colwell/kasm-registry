@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/clay-colwell/forescout-console",
+  "image_prefix": "ghcr.io/clay-colwell/forescout-console-",
   "kasm_versions": [
     {
       "version": "1.19.0",

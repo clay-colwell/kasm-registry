@@ -13,27 +13,27 @@
   "compatibility": [
     {
       "version": "1.19.0",
-      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.19.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-8.5.5:1.19.0-rolling-weekly",
       "uncompressed_size_mb": 0
     },
     {
       "version": "1.18.0",
-      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.18.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-8.5.5:1.18.0-rolling-weekly",
       "uncompressed_size_mb": 0
     },
     {
       "version": "1.17.0",
-      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.17.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-8.5.5:1.17.0-rolling-weekly",
       "uncompressed_size_mb": 0
     },
     {
       "version": "1.16.1",
-      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.16.1",
+      "image": "ghcr.io/clay-colwell/forescout-console-8.5.5:1.16.1-rolling-weekly",
       "uncompressed_size_mb": 0
     },
     {
       "version": "1.16.0",
-      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.16.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-8.5.5:1.16.0-rolling-weekly",
       "uncompressed_size_mb": 0
     }
   ]

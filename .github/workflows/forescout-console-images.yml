@@ -125,6 +125,6 @@ jobs:
             CONSOLE_ARCHIVE=${{ matrix.console_archive }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ matrix.console_version }}-kasm-${{ matrix.kasm_version }}
-          cache-from: type=gha,scope=${{ matrix.tag }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.tag }}
+            org.opencontainers.image.version=${{ matrix.tag }}
+          cache-from: type=gha,scope=${{ matrix.console_version }}-${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.console_version }}-${{ matrix.tag }}
