@@ -8,7 +8,6 @@ import shutil
 import tarfile
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_ROOT = ROOT / "workspaces" / "Forescout Console"
 CONSOLE_ROOT = WORKSPACE_ROOT / "console"
@@ -48,7 +47,7 @@ def validate_archive(archive):
 
 
 def image_name(config, console_version):
-    return f'{config["image_prefix"]}{console_version}'
+    return f"{config['image_prefix']}{console_version}"
 
 
 def image_tag(kasm_version):
@@ -83,21 +82,23 @@ def generate(config):
         compatibility = [
             {
                 "version": item["version"],
-                "image": f'{image_name(config, console_version)}:{image_tag(item["version"])}',
+                "image": f"{image_name(config, console_version)}:{image_tag(item['version'])}",
                 "uncompressed_size_mb": 0,
             }
             for item in config["kasm_versions"]
         ]
         workspace = {
             "description": (
-                f"Forescout Console {console_version}, packaged for Kasm Workspaces. "
+                f"Forescout Console ({console_version}), packaged for Kasm Workspaces. "
                 "Select the compatibility entry matching your Kasm deployment."
             ),
             "docker_registry": "https://ghcr.io",
             "image_src": "Icon.png",
-            "categories": ["Productivity", "Remote Access"],
+            "categories": ["Network Security", "Cyber Security"],
             "friendly_name": f"Forescout Console ({console_version})",
             "architecture": ["amd64"],
+            "cores": 4,
+            "memory": 4096,
             "compatibility": compatibility,
         }
         with (destination / "workspace.json").open("w", encoding="utf-8") as stream:
@@ -111,7 +112,9 @@ def generate(config):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--matrix", action="store_true", help="print the Actions matrix only")
+    parser.add_argument(
+        "--matrix", action="store_true", help="print the Actions matrix only"
+    )
     args = parser.parse_args()
     config = load_config()
     if args.matrix:

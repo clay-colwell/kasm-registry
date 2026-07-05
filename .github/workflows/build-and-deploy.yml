@@ -15,6 +15,7 @@ on:
       - 'workspaces/Forescout Console/generated/**'
       - 'scripts/generate_forescout_workspaces.py'
       - '.github/workflows/forescout-console-images.yml'
+      - '.github/workflows/build-and-deploy.yml'
   workflow_run:
     workflows:
       - Forescout Console images

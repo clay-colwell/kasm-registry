@@ -1,15 +1,17 @@
 {
-  "description": "Forescout Console 8.5.5, packaged for Kasm Workspaces. Select the compatibility entry matching your Kasm deployment.",
+  "description": "Forescout Console (8.5.5), packaged for Kasm Workspaces. Select the compatibility entry matching your Kasm deployment.",
   "docker_registry": "https://ghcr.io",
   "image_src": "Icon.png",
   "categories": [
-    "Productivity",
-    "Remote Access"
+    "Network Security",
+    "Cyber Security"
   ],
   "friendly_name": "Forescout Console (8.5.5)",
   "architecture": [
     "amd64"
   ],
+  "cores": 4,
+  "memory": 4096,
   "compatibility": [
     {
       "version": "1.19.0",
