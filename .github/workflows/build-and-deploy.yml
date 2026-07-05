@@ -1,17 +1,41 @@
-name: Build
+name: Build and deploy registry
 
 on:
   push:
     branches-ignore:
-      - 'gh-pages'
+      - gh-pages
+    paths-ignore:
+      - 'workspaces/Forescout Console/console/*.tar.gz'
+      - 'workspaces/Forescout Console/desktop/**'
+      - 'workspaces/Forescout Console/xfce4/**'
+      - 'workspaces/Forescout Console/Background.png'
+      - 'workspaces/Forescout Console/Icon.png'
+      - 'workspaces/Forescout Console/Dockerfile'
+      - 'workspaces/Forescout Console/image-config.json'
+      - 'workspaces/Forescout Console/generated/**'
+      - 'scripts/generate_forescout_workspaces.py'
+      - '.github/workflows/forescout-console-images.yml'
+  workflow_run:
+    workflows:
+      - Forescout Console images
+    types:
+      - completed
+  workflow_dispatch:
+
 permissions:
   contents: write
+
+concurrency:
+  group: registry-pages-deploy
+  cancel-in-progress: false
+
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build # Have to run processing first so the list.json exists to be included in the the deploy
         run: |
