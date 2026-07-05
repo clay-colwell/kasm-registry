@@ -102,10 +102,7 @@ def generate(config):
             for item in config["kasm_versions"]
         ]
         workspace = {
-            "description": (
-                f"Forescout Console ({console_version}), packaged for Kasm Workspaces. "
-                "Select the compatibility entry matching your Kasm deployment."
-            ),
+            "description": f"Forescout Console ({console_version}), packaged for Kasm Workspaces. ",
             "docker_registry": "https://ghcr.io",
             "image_src": "Icon.png",
             "categories": ["Network Security", "Cyber Security"],
