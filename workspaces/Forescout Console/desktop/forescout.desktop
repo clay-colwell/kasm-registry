@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Exec=/home/kasm-user/Forescout\ Console/GuiManager/current/Forescout\ Console
+Name=Forescout Console
+Icon=/home/kasm-user/Forescout Console/GuiManager/current/etc/images/mainwindows/System_Icon_Big.png
+Comment=
+Path=
+StartupNotify=false
