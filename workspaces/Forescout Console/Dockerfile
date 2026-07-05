@@ -16,13 +16,13 @@ LABEL org.opencontainers.image.title="Forescout Console for Kasm Workspaces" \
       org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
 RUN dnf upgrade -y \
-    && dnf install -y chromium \
+    && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/ubuntu/install/chromium/install_chromium.sh -O /tmp/install_chromium.sh \
+    && DISTRO=fedora43 SKIP_CLEAN=1 bash /tmp/install_chromium.sh \
+    && rm -f /tmp/install_chromium.sh \
     && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/oracle/install/vs_code/install_vs_code.sh -O /tmp/install_vs_code.sh \
     && DISTRO=fedora43 SKIP_CLEAN=1 bash /tmp/install_vs_code.sh \
     && rm -f /tmp/install_vs_code.sh \
-    && dnf clean all \
-    && mkdir -p ~/.config/xfce4 \
-    && echo "WebBrowser=chromium" > ~/.config/xfce4/helpers.rc
+    && dnf clean all
 
 COPY ["workspaces/Forescout Console/Background.png", "/usr/share/backgrounds/bg_default.png"]
 COPY ["workspaces/Forescout Console/xfce4/*", "/home/kasm-default-profile/.config/xfce4/xfconf/xfce-perchannel-xml/"]
