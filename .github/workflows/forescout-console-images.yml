@@ -1,0 +1,130 @@
+name: Forescout Console images
+
+on:
+  push:
+    paths:
+      - 'workspaces/Forescout Console/console/*.tar.gz'
+      - 'workspaces/Forescout Console/desktop/**'
+      - 'workspaces/Forescout Console/xfce4/**'
+      - 'workspaces/Forescout Console/Background.png'
+      - 'workspaces/Forescout Console/Icon.png'
+      - 'workspaces/Forescout Console/Dockerfile'
+      - 'workspaces/Forescout Console/image-config.json'
+      - 'scripts/generate_forescout_workspaces.py'
+      - '.github/workflows/forescout-console-images.yml'
+  schedule:
+    # GitHub schedules use UTC. These cover 03:00 in both EST and EDT; the
+    # prepare job rejects the duplicate hour after converting to New York time.
+    - cron: '0 7,8 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: Rebuild even when the base digest is unchanged
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: forescout-console-images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      run_builds: ${{ steps.time.outputs.run_builds }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - id: time
+        name: Enforce 3 AM America/New_York schedule
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [[ "$EVENT_NAME" != schedule || "$(TZ=America/New_York date +%H)" == 03 ]]; then
+            echo 'run_builds=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run_builds=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate and generate workspace metadata
+        run: python3 scripts/generate_forescout_workspaces.py
+
+      - id: matrix
+        name: Generate build matrix
+        run: echo "matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit generated registry workspaces
+        if: github.event_name == 'push'
+        run: |
+          if [[ -n "$(git status --short -- 'workspaces/Forescout Console/generated')" ]]; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add 'workspaces/Forescout Console/generated'
+            git commit -m 'chore: generate Forescout workspaces'
+            git push
+          fi
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.run_builds == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: digest
+        name: Compare upstream base digest
+        env:
+          BASE_IMAGE: ${{ matrix.base_image }}
+          TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
+          FORCE_REBUILD: ${{ inputs.force_rebuild || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          base_digest=$(docker buildx imagetools inspect "$BASE_IMAGE" --format '{{.Manifest.Digest}}')
+          published_digest=$(docker buildx imagetools inspect "$TARGET_IMAGE" \
+            --format '{{index .Image.Config.Labels "org.opencontainers.image.base.digest"}}' 2>/dev/null || true)
+          echo "base_digest=$base_digest" >> "$GITHUB_OUTPUT"
+          if [[ "$EVENT_NAME" == push || "$FORCE_REBUILD" == true || "$base_digest" != "$published_digest" ]]; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push image
+        if: steps.digest.outputs.changed == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: workspaces/Forescout Console/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ matrix.image }}:${{ matrix.tag }}
+          build-args: |
+            BASE_IMAGE=${{ matrix.base_image }}
+            BASE_DIGEST=${{ steps.digest.outputs.base_digest }}
+            CONSOLE_ARCHIVE=${{ matrix.console_archive }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ matrix.console_version }}-kasm-${{ matrix.kasm_version }}
+          cache-from: type=gha,scope=${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.tag }}

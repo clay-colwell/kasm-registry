@@ -1,0 +1,40 @@
+{
+  "description": "Forescout Console 8.5.5, packaged for Kasm Workspaces. Select the compatibility entry matching your Kasm deployment.",
+  "docker_registry": "https://ghcr.io",
+  "image_src": "Icon.png",
+  "categories": [
+    "Productivity",
+    "Remote Access"
+  ],
+  "friendly_name": "Forescout Console (8.5.5)",
+  "architecture": [
+    "amd64"
+  ],
+  "compatibility": [
+    {
+      "version": "1.19.0",
+      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.19.0",
+      "uncompressed_size_mb": 0
+    },
+    {
+      "version": "1.18.0",
+      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.18.0",
+      "uncompressed_size_mb": 0
+    },
+    {
+      "version": "1.17.0",
+      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.17.0",
+      "uncompressed_size_mb": 0
+    },
+    {
+      "version": "1.16.1",
+      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.16.1",
+      "uncompressed_size_mb": 0
+    },
+    {
+      "version": "1.16.0",
+      "image": "ghcr.io/clay-colwell/forescout-console:8.5.5-kasm-1.16.0",
+      "uncompressed_size_mb": 0
+    }
+  ]
+}

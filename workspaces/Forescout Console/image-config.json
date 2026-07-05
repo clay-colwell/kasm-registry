@@ -1,0 +1,25 @@
+{
+  "image": "ghcr.io/clay-colwell/forescout-console",
+  "kasm_versions": [
+    {
+      "version": "1.19.0",
+      "base": "kasmweb/core-fedora-43:1.19.0-rolling-weekly"
+    },
+    {
+      "version": "1.18.0",
+      "base": "kasmweb/core-fedora-41:1.18.0-rolling-weekly"
+    },
+    {
+      "version": "1.17.0",
+      "base": "kasmweb/core-fedora-41:1.17.0-rolling-weekly"
+    },
+    {
+      "version": "1.16.1",
+      "base": "kasmweb/core-fedora-40:1.16.1-rolling-weekly"
+    },
+    {
+      "version": "1.16.0",
+      "base": "kasmweb/core-fedora-40:1.16.0-rolling-weekly"
+    }
+  ]
+}
