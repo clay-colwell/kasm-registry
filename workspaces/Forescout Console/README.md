@@ -111,7 +111,7 @@ fs.java.version.home=jre1.8.0_442-3
 
 ### login.fingerprint.properties
 
-This file is used to create a shortcut on the desktop to go to the Forescout Web Dashboard.
+This file is used by the console to remember what EMs it has already connected to. Pre-fill with your actualy EM Fingerprint to stop the "Do you trust this server" dialog when connecting to your EM with a Fresh console install.
 - Enabled: `True`
 - Type: `Text`
 - Name: `login.fingerprint.properties`
