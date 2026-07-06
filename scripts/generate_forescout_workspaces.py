@@ -20,13 +20,17 @@ def load_config():
         return json.load(stream)
 
 
-def archives():
+def archives(validate=True, console_versions=None):
+    selected = set(console_versions or [])
     found = []
     for archive in sorted(CONSOLE_ROOT.glob("*.tar.gz")):
         version = archive.name[:-7]
         if not VERSION_RE.fullmatch(version):
             raise SystemExit(f"Invalid console archive name: {archive.name}")
-        validate_archive(archive)
+        if selected and version not in selected:
+            continue
+        if validate:
+            validate_archive(archive)
         found.append((version, archive.name))
     return found
 
@@ -54,8 +58,7 @@ def image_tag(kasm_version):
     return f"{kasm_version}-rolling-weekly"
 
 
-def build_matrix(config, console_versions=None):
-    selected = set(console_versions or [])
+def build_matrix(config, console_versions=None, validate_archives=True):
     return {
         "include": [
             {
@@ -66,17 +69,18 @@ def build_matrix(config, console_versions=None):
                 "image": image_name(config, console_version),
                 "tag": image_tag(item["version"]),
             }
-            for console_version, archive in archives()
-            if not selected or console_version in selected
+            for console_version, archive in archives(
+                validate=validate_archives, console_versions=console_versions
+            )
             for item in config["kasm_versions"]
         ]
     }
 
 
-def generate(config):
+def generate(config, validate_archives=True):
     GENERATED_ROOT.mkdir(parents=True, exist_ok=True)
     expected = set()
-    for console_version, _archive in archives():
+    for console_version, _archive in archives(validate=validate_archives):
         destination = GENERATED_ROOT / console_version
         expected.add(destination)
         destination.mkdir(parents=True, exist_ok=True)
@@ -162,6 +166,11 @@ def main():
         default=[],
         help="limit the build matrix to this Console version (repeatable)",
     )
+    parser.add_argument(
+        "--skip-archive-validation",
+        action="store_true",
+        help="generate metadata without reading Git LFS archive contents",
+    )
     args = parser.parse_args()
     config = load_config()
     if args.sizes_dir:
@@ -169,11 +178,16 @@ def main():
     elif args.matrix:
         print(
             json.dumps(
-                build_matrix(config, args.console_version), separators=(",", ":")
+                build_matrix(
+                    config,
+                    args.console_version,
+                    validate_archives=not args.skip_archive_validation,
+                ),
+                separators=(",", ":"),
             )
         )
     else:
-        generate(config)
+        generate(config, validate_archives=not args.skip_archive_validation)
 
 
 if __name__ == "__main__":

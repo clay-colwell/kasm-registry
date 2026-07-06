@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - gh-pages
     paths-ignore:
+      - '.dockerignore'
       - 'workspaces/Forescout Console/console/*.tar.gz'
       - 'workspaces/Forescout Console/desktop/**'
       - 'workspaces/Forescout Console/xfce4/**'

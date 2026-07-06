@@ -1,0 +1,22 @@
+# Repository metadata and local/editor files
+.git
+.github
+.gitignore
+.gitattributes
+**/.DS_Store
+
+# Registry website, processing tools, references, and generated output
+reference
+processing
+site
+public
+scripts
+node_modules
+build_all_branches.sh
+
+# Forescout files used by the registry site but not by the container build
+workspaces/README.md
+workspaces/Forescout Console/README.md
+workspaces/Forescout Console/Icon.png
+workspaces/Forescout Console/image-config.json
+workspaces/Forescout Console/generated

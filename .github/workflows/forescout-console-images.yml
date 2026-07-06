@@ -14,9 +14,8 @@ on:
       - 'scripts/generate_forescout_workspaces.py'
       - '.github/workflows/forescout-console-images.yml'
   schedule:
-    # GitHub schedules use UTC. These cover 03:00 in both EST and EDT; the
-    # prepare job rejects the duplicate hour after converting to New York time.
-    - cron: '0 7,8 * * 1'
+    # GitHub schedules use UTC. 07:00 UTC is 03:00 Eastern during daylight time.
+    - cron: '0 7 * * 1'
   workflow_dispatch:
     inputs:
       force_rebuild:
@@ -37,26 +36,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      run_builds: ${{ steps.time.outputs.run_builds }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
 
-      - id: time
-        name: Enforce 3 AM America/New_York schedule
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          if [[ "$EVENT_NAME" != schedule || "$(TZ=America/New_York date +%H)" == 03 ]]; then
-            echo 'run_builds=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'run_builds=false' >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Validate and generate workspace metadata
-        run: python3 scripts/generate_forescout_workspaces.py
+      - name: Generate workspace metadata
+        run: python3 scripts/generate_forescout_workspaces.py --skip-archive-validation
 
       - id: matrix
         name: Generate build matrix
@@ -92,20 +78,25 @@ jobs:
             matrix_args=()
           fi
 
-          matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix "${matrix_args[@]}")
+          matrix=$(python3 scripts/generate_forescout_workspaces.py --matrix --skip-archive-validation "${matrix_args[@]}")
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare
-    if: needs.prepare.outputs.run_builds == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
+
+      - name: Download and validate selected Console archive
+        env:
+          CONSOLE_ARCHIVE: ${{ matrix.console_archive }}
+          CONSOLE_VERSION: ${{ matrix.console_version }}
+        run: |
+          git lfs pull --include="workspaces/Forescout Console/console/$CONSOLE_ARCHIVE" --exclude=""
+          python3 scripts/generate_forescout_workspaces.py --matrix --console-version "$CONSOLE_VERSION" > /dev/null
 
       - uses: docker/setup-buildx-action@v3
 
@@ -134,14 +125,15 @@ jobs:
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build and push image
+      - name: Build and load image
         if: steps.digest.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: workspaces/Forescout Console/Dockerfile
           platforms: linux/amd64
-          push: true
+          load: true
+          push: false
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
@@ -153,6 +145,12 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.console_version }}-${{ matrix.tag }}
           cache-to: type=gha,mode=max,scope=${{ matrix.console_version }}-${{ matrix.tag }}
 
+      - name: Push image
+        if: steps.digest.outputs.changed == 'true'
+        env:
+          TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
+        run: docker push "$TARGET_IMAGE"
+
       - name: Record uncompressed image size
         env:
           TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
@@ -162,7 +160,10 @@ jobs:
           existing_size=$(jq --arg image "$TARGET_IMAGE" \
             '[.compatibility[]? | select(.image == $image) | .uncompressed_size_mb][0] // 0' \
             "$WORKSPACE_FILE" 2>/dev/null || echo 0)
-          if [[ "$IMAGE_CHANGED" == true || "$existing_size" == 0 ]]; then
+          if [[ "$IMAGE_CHANGED" == true ]]; then
+            size_bytes=$(docker image inspect --format '{{.Size}}' "$TARGET_IMAGE")
+            size_mb=$(( (size_bytes + 500000) / 1000000 ))
+          elif [[ "$existing_size" == 0 ]]; then
             docker pull "$TARGET_IMAGE"
             size_bytes=$(docker image inspect --format '{{.Size}}' "$TARGET_IMAGE")
             size_mb=$(( (size_bytes + 500000) / 1000000 ))
@@ -185,12 +186,10 @@ jobs:
     needs:
       - prepare
       - build
-    if: needs.prepare.outputs.run_builds == 'true' && needs.build.result == 'success'
+    if: needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - name: Download image-size records
         uses: actions/download-artifact@v4
@@ -201,7 +200,7 @@ jobs:
 
       - name: Generate workspaces and apply published image sizes
         run: |
-          python3 scripts/generate_forescout_workspaces.py
+          python3 scripts/generate_forescout_workspaces.py --skip-archive-validation
           python3 scripts/generate_forescout_workspaces.py --sizes-dir image-sizes
 
       - name: Commit generated registry workspaces
