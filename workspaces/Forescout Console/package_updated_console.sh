@@ -119,6 +119,8 @@ echo "Keeping preferred Java runtime: $preferred_jre"
 find "$ETC_DIR" -maxdepth 1 -type f -name 'local.properties*' ! -name 'local.properties' -delete
 find "$ETC_DIR" -regextype posix-extended -maxdepth 1 -type d \
     -regex '.*/forescout[0-9]+' -exec rm -rf -- {} +
+find "$CURRENT_DIR" -regextype posix-extended -maxdepth 1 -type d \
+    -regex '.*/upgrade[0-9]+' -exec rm -rf -- {} +
 find "$CONSOLE_HOME" -maxdepth 1 -type d -name 'jre*' \
     ! -name "$preferred_jre" -exec rm -rf -- {} +
 
