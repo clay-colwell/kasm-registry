@@ -29,6 +29,7 @@ RUN dnf upgrade -y \
 COPY ["workspaces/Forescout Console/Background.png", "/usr/share/backgrounds/bg_default.png"]
 COPY ["workspaces/Forescout Console/xfce4/*", "/home/kasm-default-profile/.config/xfce4/xfconf/xfce-perchannel-xml/"]
 COPY ["workspaces/Forescout Console/console/${CONSOLE_ARCHIVE}", "/tmp/forescout-console.tar.gz"]
+COPY ["workspaces/Forescout Console/package_updated_console.sh", "/usr/local/bin/package-forescout-console"]
 
 RUN find $HOME/Desktop -name "*.desktop" -type f -delete \
     && tar -xzf /tmp/forescout-console.tar.gz -C "$HOME" \
@@ -42,6 +43,7 @@ COPY ["workspaces/Forescout Console/desktop/*", "/home/kasm-default-profile/Desk
 RUN find "$HOME/Desktop" -name "*.desktop" -type f -exec chmod 0755 {} + \
     && chown -R 1000:1000 "$HOME/Desktop" "$HOME/Forescout Console" \
     && chmod +x "$HOME/Forescout Console/GuiManager/current/Forescout Console" \
+    && chmod 0755 /usr/local/bin/package-forescout-console \
     && echo "/usr/bin/desktop_ready && eval \$(grep '^Exec=' \"\$HOME/Desktop/forescout.desktop\" | tail -1 | sed 's/^Exec=//' | sed 's/%[fFuU]//g') &" > "$STARTUPDIR/custom_startup.sh" \
     && chmod 0755 "$STARTUPDIR/custom_startup.sh" \
     && chown 1000:0 "$HOME" \

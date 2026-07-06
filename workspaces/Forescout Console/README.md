@@ -32,6 +32,17 @@ To regenerate metadata locally:
 python3 scripts/generate_forescout_workspaces.py
 ```
 
+After a Console updates itself from an Enterprise Manager, close the Console
+and package the updated installation from inside the Kasm session with:
+
+```bash
+package-forescout-console
+```
+
+The utility cleans environment-specific and transient data, reads the updated
+version, and creates `/home/kasm-user/Downloads/<version>.tar.gz` ready to add
+to `console/`. Use a session without Persistent Profile whenever possible.
+
 ## Customizing Workspace for your Environment
 
 To make it easier for users to use the Forescout Console in your environment, you may wish to utilize the File Mappings feature on the workspace config to update the Console launcher shortcut to autologin to your local Forescout Console instance, create a shortcut to the Web Dashboard, pre-load `local.properties` (to avoid the redundant JRE update check on login and set other preferences) and `login.fingerprint.properties` (to avoid the fingerprint prompt on initial login). 

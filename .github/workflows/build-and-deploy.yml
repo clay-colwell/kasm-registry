@@ -11,6 +11,7 @@ on:
       - 'workspaces/Forescout Console/Background.png'
       - 'workspaces/Forescout Console/Icon.png'
       - 'workspaces/Forescout Console/Dockerfile'
+      - 'workspaces/Forescout Console/package_updated_console.sh'
       - 'workspaces/Forescout Console/image-config.json'
       - 'workspaces/Forescout Console/generated/**'
       - 'scripts/generate_forescout_workspaces.py'
