@@ -50,6 +50,16 @@ def validate_archive(archive):
                 )
 
 
+def archive_size_mb(console_version):
+    archive = CONSOLE_ROOT / f"{console_version}.tar.gz"
+    if not archive.is_file():
+        raise SystemExit(f"Console archive not found: {archive}")
+    validate_archive(archive)
+    with tarfile.open(archive, "r:gz") as bundle:
+        size_bytes = sum(member.size for member in bundle)
+    return (size_bytes + 500_000) // 1_000_000
+
+
 def image_name(config, console_version):
     return f"{config['image_prefix']}{console_version}"
 
@@ -171,9 +181,16 @@ def main():
         action="store_true",
         help="generate metadata without reading Git LFS archive contents",
     )
+    parser.add_argument(
+        "--archive-size-mb",
+        metavar="CONSOLE_VERSION",
+        help="print the archive's uncompressed member size in decimal MB",
+    )
     args = parser.parse_args()
     config = load_config()
-    if args.sizes_dir:
+    if args.archive_size_mb:
+        print(archive_size_mb(args.archive_size_mb))
+    elif args.sizes_dir:
         update_sizes(args.sizes_dir)
     elif args.matrix:
         print(

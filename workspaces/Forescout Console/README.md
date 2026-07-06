@@ -22,6 +22,9 @@ the current base manifest digest with the digest recorded on the published
 image and skips unchanged combinations.
 An archive-only push builds only the Console versions whose `.tar.gz` files
 changed. Changes to shared image inputs rebuild every Console version.
+Workspace image sizes are estimates calculated from the Console archive's
+uncompressed contents plus a calibrated per-Kasm image overhead; published
+images are not downloaded again solely for size measurement.
 
 The repository must allow GitHub Actions to read/write repository contents and
 packages. Make the GHCR package public if Kasm should pull it without registry

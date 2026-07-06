@@ -28,13 +28,11 @@ RUN dnf upgrade -y \
 
 COPY ["workspaces/Forescout Console/Background.png", "/usr/share/backgrounds/bg_default.png"]
 COPY ["workspaces/Forescout Console/xfce4/*", "/home/kasm-default-profile/.config/xfce4/xfconf/xfce-perchannel-xml/"]
-COPY ["workspaces/Forescout Console/console/${CONSOLE_ARCHIVE}", "/tmp/forescout-console.tar.gz"]
+ADD --chown=1000:1000 ["workspaces/Forescout Console/console/${CONSOLE_ARCHIVE}", "/home/kasm-default-profile/"]
 COPY ["workspaces/Forescout Console/package_updated_console.sh", "/usr/local/bin/package-forescout-console"]
 
 RUN find $HOME/Desktop -name "*.desktop" -type f -delete \
-    && tar -xzf /tmp/forescout-console.tar.gz -C "$HOME" \
     && test -d "$HOME/Forescout Console" \
-    && rm /tmp/forescout-console.tar.gz \
     && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/ubuntu/install/cleanup/cleanup.sh -O /tmp/cleanup.sh \
     && DISTRO=fedora43 bash /tmp/cleanup.sh
 

@@ -3,23 +3,28 @@
   "kasm_versions": [
     {
       "version": "1.19.0",
-      "base": "kasmweb/core-fedora-43:1.19.0-rolling-weekly"
+      "base": "kasmweb/core-fedora-43:1.19.0-rolling-weekly",
+      "estimated_overhead_mb": 5548
     },
     {
       "version": "1.18.0",
-      "base": "kasmweb/core-fedora-41:1.18.0-rolling-weekly"
+      "base": "kasmweb/core-fedora-41:1.18.0-rolling-weekly",
+      "estimated_overhead_mb": 5341
     },
     {
       "version": "1.17.0",
-      "base": "kasmweb/core-fedora-41:1.17.0-rolling-weekly"
+      "base": "kasmweb/core-fedora-41:1.17.0-rolling-weekly",
+      "estimated_overhead_mb": 5295
     },
     {
       "version": "1.16.1",
-      "base": "kasmweb/core-fedora-40:1.16.1-rolling-weekly"
+      "base": "kasmweb/core-fedora-40:1.16.1-rolling-weekly",
+      "estimated_overhead_mb": 6239
     },
     {
       "version": "1.16.0",
-      "base": "kasmweb/core-fedora-40:1.16.0-rolling-weekly"
+      "base": "kasmweb/core-fedora-40:1.16.0-rolling-weekly",
+      "estimated_overhead_mb": 6169
     }
   ]
 }

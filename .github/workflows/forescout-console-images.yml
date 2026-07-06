@@ -101,11 +101,18 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for attempt in 1 2 3; do
+            if echo "$GHCR_TOKEN" | timeout 90 docker login ghcr.io --username "$GHCR_USER" --password-stdin; then
+              exit 0
+            fi
+            echo "GHCR login attempt $attempt failed; retrying..." >&2
+            sleep $((attempt * 10))
+          done
+          exit 1
 
       - id: digest
         name: Compare upstream base digest
@@ -125,15 +132,14 @@ jobs:
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build and load image
+      - name: Build and push image
         if: steps.digest.outputs.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: workspaces/Forescout Console/Dockerfile
           platforms: linux/amd64
-          load: true
-          push: false
+          push: true
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
@@ -145,28 +151,23 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.console_version }}-${{ matrix.tag }}
           cache-to: type=gha,mode=max,scope=${{ matrix.console_version }}-${{ matrix.tag }}
 
-      - name: Push image
-        if: steps.digest.outputs.changed == 'true'
-        env:
-          TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
-        run: docker push "$TARGET_IMAGE"
-
-      - name: Record uncompressed image size
+      - name: Estimate uncompressed image size
         env:
           TARGET_IMAGE: ${{ matrix.image }}:${{ matrix.tag }}
           WORKSPACE_FILE: workspaces/Forescout Console/generated/${{ matrix.console_version }}/workspace.json
           IMAGE_CHANGED: ${{ steps.digest.outputs.changed }}
+          CONSOLE_VERSION: ${{ matrix.console_version }}
+          KASM_VERSION: ${{ matrix.kasm_version }}
         run: |
           existing_size=$(jq --arg image "$TARGET_IMAGE" \
             '[.compatibility[]? | select(.image == $image) | .uncompressed_size_mb][0] // 0' \
             "$WORKSPACE_FILE" 2>/dev/null || echo 0)
-          if [[ "$IMAGE_CHANGED" == true ]]; then
-            size_bytes=$(docker image inspect --format '{{.Size}}' "$TARGET_IMAGE")
-            size_mb=$(( (size_bytes + 500000) / 1000000 ))
-          elif [[ "$existing_size" == 0 ]]; then
-            docker pull "$TARGET_IMAGE"
-            size_bytes=$(docker image inspect --format '{{.Size}}' "$TARGET_IMAGE")
-            size_mb=$(( (size_bytes + 500000) / 1000000 ))
+          if [[ "$IMAGE_CHANGED" == true || "$existing_size" == 0 ]]; then
+            console_size=$(python3 scripts/generate_forescout_workspaces.py --archive-size-mb "$CONSOLE_VERSION")
+            overhead=$(jq --arg version "$KASM_VERSION" \
+              '[.kasm_versions[] | select(.version == $version) | .estimated_overhead_mb][0]' \
+              'workspaces/Forescout Console/image-config.json')
+            size_mb=$((console_size + overhead))
           else
             size_mb=$existing_size
           fi
@@ -175,7 +176,7 @@ jobs:
             '{image: $image, uncompressed_size_mb: $size}' \
             > "image-size/${{ matrix.console_version }}-${{ matrix.kasm_version }}.json"
 
-      - name: Upload image-size record
+      - name: Upload image-size estimate
         uses: actions/upload-artifact@v4
         with:
           name: image-size-${{ matrix.console_version }}-${{ matrix.kasm_version }}
