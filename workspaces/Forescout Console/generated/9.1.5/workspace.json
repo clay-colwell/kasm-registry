@@ -1,0 +1,42 @@
+{
+  "description": "Forescout Console (9.1.5), packaged for Kasm Workspaces. ",
+  "docker_registry": "https://ghcr.io",
+  "image_src": "Icon.png",
+  "categories": [
+    "Network Security",
+    "Cyber Security"
+  ],
+  "friendly_name": "Forescout Console (9.1.5)",
+  "architecture": [
+    "amd64"
+  ],
+  "cores": 4,
+  "memory": 4096,
+  "compatibility": [
+    {
+      "version": "1.19.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.19.0-rolling-weekly",
+      "uncompressed_size_mb": 5867
+    },
+    {
+      "version": "1.18.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.18.0-rolling-weekly",
+      "uncompressed_size_mb": 5660
+    },
+    {
+      "version": "1.17.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.17.0-rolling-weekly",
+      "uncompressed_size_mb": 5614
+    },
+    {
+      "version": "1.16.1",
+      "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.16.1-rolling-weekly",
+      "uncompressed_size_mb": 6558
+    },
+    {
+      "version": "1.16.0",
+      "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.16.0-rolling-weekly",
+      "uncompressed_size_mb": 6489
+    }
+  ]
+}
