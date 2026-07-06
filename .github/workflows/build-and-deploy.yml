@@ -32,8 +32,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  deployment-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'push'
+        with:
+          fetch-depth: 0
+
+      - id: decide
+        name: Wait for image workflow when Forescout inputs changed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          deploy=true
+          if [[ "$EVENT_NAME" == push ]]; then
+            changed_files() {
+              if git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+                git diff --name-only -z "$BEFORE_SHA" "$GITHUB_SHA"
+              else
+                git diff-tree --root --no-commit-id --name-only -z -r "$GITHUB_SHA"
+              fi
+            }
+            while IFS= read -r -d '' file; do
+              case "$file" in
+                workspaces/Forescout\ Console/console/*.tar.gz|workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|.github/workflows/forescout-console-images.yml)
+                  deploy=false
+                  break
+                  ;;
+              esac
+            done < <(changed_files)
+          fi
+          echo "deploy=$deploy" >> "$GITHUB_OUTPUT"
+
   build:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    needs: deployment-gate
+    if: needs.deployment-gate.outputs.deploy == 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
 
     steps:

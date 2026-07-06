@@ -2,8 +2,11 @@
 set -euo pipefail
 
 CONSOLE_HOME="/home/kasm-user/Forescout Console"
-CURRENT_DIR="$CONSOLE_HOME/GuiManager/current"
+GUI_MANAGER_DIR="$CONSOLE_HOME/GuiManager"
+CURRENT_DIR="$GUI_MANAGER_DIR/current"
+ETC_DIR="$CURRENT_DIR/etc"
 VERSION_FILE="$CONSOLE_HOME/etc/version.properties"
+CONSOLE_PROPERTIES="$CURRENT_DIR/Forescout Console.properties"
 DOWNLOADS_DIR="/home/kasm-user/Downloads"
 CONSOLE_PROCESS="$CURRENT_DIR/Forescout Console"
 
@@ -65,13 +68,63 @@ if [[ ! "$version" =~ ^[0-9]+([.][0-9]+)*$ ]]; then
     exit 1
 fi
 
-echo "Preparing Forescout Console $version..."
+if [[ ! -f "$CONSOLE_PROPERTIES" ]]; then
+    echo "Console properties file not found: $CONSOLE_PROPERTIES" >&2
+    exit 1
+fi
 
-: > "$CURRENT_DIR/etc/login.fingerprint.properties"
-: > "$CURRENT_DIR/etc/local.properties"
+preferred_java_binary=$(awk -F= '
+    $1 == "preferred_java_binary" {
+        value = substr($0, index($0, "=") + 1)
+        sub(/\r$/, "", value)
+        print value
+        exit
+    }
+' "$CONSOLE_PROPERTIES")
+
+if [[ -z "$preferred_java_binary" ]]; then
+    echo "preferred_java_binary is missing from $CONSOLE_PROPERTIES" >&2
+    exit 1
+fi
+
+if [[ "$preferred_java_binary" == /* ]]; then
+    preferred_java_path=$(realpath -m -- "$preferred_java_binary")
+else
+    preferred_java_path=$(realpath -m -- "$CURRENT_DIR/$preferred_java_binary")
+fi
+
+case "$preferred_java_path" in
+    "$CONSOLE_HOME"/jre*/bin/java)
+        preferred_jre=${preferred_java_path#"$CONSOLE_HOME"/}
+        preferred_jre=${preferred_jre%%/*}
+        ;;
+    *)
+        echo "Refusing to prune JREs: preferred_java_binary does not resolve to $CONSOLE_HOME/jre*/bin/java" >&2
+        echo "Resolved value: $preferred_java_path" >&2
+        exit 1
+        ;;
+esac
+
+if [[ ! -d "$CONSOLE_HOME/$preferred_jre" ]]; then
+    echo "Preferred JRE directory not found: $CONSOLE_HOME/$preferred_jre" >&2
+    exit 1
+fi
+
+echo "Preparing Forescout Console $version..."
+echo "Keeping preferred Java runtime: $preferred_jre"
+
+: > "$ETC_DIR/login.fingerprint.properties"
+: > "$ETC_DIR/local.properties"
+
+find "$ETC_DIR" -maxdepth 1 -type f -name 'local.properties*' ! -name 'local.properties' -delete
+find "$ETC_DIR" -regextype posix-extended -maxdepth 1 -type d \
+    -regex '.*/forescout[0-9]+' -exec rm -rf -- {} +
+find "$CONSOLE_HOME" -maxdepth 1 -type d -name 'jre*' \
+    ! -name "$preferred_jre" -exec rm -rf -- {} +
 
 find "$CURRENT_DIR" -maxdepth 1 -name 'connect_connect_*' -exec rm -rf -- {} +
 find "$CURRENT_DIR" -maxdepth 1 -name 'pluginsetup*' -exec rm -rf -- {} +
+find "$GUI_MANAGER_DIR" -maxdepth 1 -name 'new_ver*' -exec rm -rf -- {} +
 
 for directory in tmp plugin modules log reports; do
     if [[ -d "$CURRENT_DIR/$directory" ]]; then
