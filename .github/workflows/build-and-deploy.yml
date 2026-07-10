@@ -6,6 +6,7 @@ on:
       - gh-pages
     paths-ignore:
       - '.dockerignore'
+      - 'workspaces/Bruno/**'
       - 'workspaces/Forescout Console/console/*.tar.gz'
       - 'workspaces/Forescout Console/desktop/**'
       - 'workspaces/Forescout Console/xfce4/**'
@@ -16,11 +17,13 @@ on:
       - 'workspaces/Forescout Console/image-config.json'
       - 'workspaces/Forescout Console/generated/**'
       - 'scripts/generate_forescout_workspaces.py'
+      - '.github/workflows/bruno-image.yml'
       - '.github/workflows/forescout-console-images.yml'
       - '.github/workflows/build-and-deploy.yml'
   workflow_run:
     workflows:
       - Forescout Console images
+      - Bruno image
     types:
       - completed
   workflow_dispatch:
@@ -44,7 +47,7 @@ jobs:
           fetch-depth: 0
 
       - id: decide
-        name: Wait for image workflow when Forescout inputs changed
+        name: Wait for image workflow when custom image inputs changed
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -60,7 +63,7 @@ jobs:
             }
             while IFS= read -r -d '' file; do
               case "$file" in
-                workspaces/Forescout\ Console/console/*.tar.gz|workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|.github/workflows/forescout-console-images.yml)
+                workspaces/Forescout\ Console/console/*.tar.gz|workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|.github/workflows/forescout-console-images.yml|workspaces/Bruno/*|.github/workflows/bruno-image.yml)
                   deploy=false
                   break
                   ;;

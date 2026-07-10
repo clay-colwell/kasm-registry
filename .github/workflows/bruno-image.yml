@@ -1,0 +1,60 @@
+name: Bruno image
+
+on:
+  push:
+    paths:
+      - 'workspaces/Bruno/**'
+      - '.github/workflows/bruno-image.yml'
+  schedule:
+    # Rebuild weekly to pick up both the rolling Kasm base and Bruno APT updates.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: bruno-image-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BASE_IMAGE: kasmweb/core-ubuntu-jammy:1.19.0-rolling-weekly
+  TARGET_IMAGE: ghcr.io/clay-colwell/bruno:1.19.0-rolling-weekly
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USER" --password-stdin
+
+      - id: base
+        name: Resolve upstream base digest
+        run: |
+          digest=$(docker buildx imagetools inspect "$BASE_IMAGE" --format '{{.Manifest.Digest}}')
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: workspaces/Bruno
+          file: workspaces/Bruno/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.TARGET_IMAGE }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BASE_DIGEST=${{ steps.base.outputs.digest }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=1.19.0-rolling-weekly
+          cache-from: type=gha,scope=bruno-1.19.0-rolling-weekly
+          cache-to: type=gha,mode=max,scope=bruno-1.19.0-rolling-weekly

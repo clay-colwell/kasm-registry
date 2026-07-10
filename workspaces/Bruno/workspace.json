@@ -1,0 +1,21 @@
+{
+  "description": "Bruno is an open-source, Git-native API client for exploring and testing APIs.",
+  "docker_registry": "https://ghcr.io",
+  "image_src": "bruno.png",
+  "categories": [
+    "Development"
+  ],
+  "friendly_name": "Bruno",
+  "architecture": [
+    "amd64"
+  ],
+  "cores": 2,
+  "memory": 2768,
+  "compatibility": [
+    {
+      "version": "1.19.0",
+      "image": "ghcr.io/clay-colwell/bruno:1.19.0-rolling-weekly",
+      "uncompressed_size_mb": 0
+    }
+  ]
+}
