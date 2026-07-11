@@ -16,6 +16,7 @@ LABEL org.opencontainers.image.title="Forescout Console for Kasm Workspaces" \
       org.opencontainers.image.base.digest="${BASE_DIGEST}"
 
 RUN dnf upgrade -y \
+    && dnf install -y bind-utils iputils \
     && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/ubuntu/install/chromium/install_chromium.sh -O /tmp/install_chromium.sh \
     && DISTRO=fedora43 SKIP_CLEAN=1 bash /tmp/install_chromium.sh \
     && rm -f /tmp/install_chromium.sh \
