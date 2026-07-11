@@ -16,27 +16,27 @@
     {
       "version": "1.19.0",
       "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.19.0-rolling-weekly",
-      "uncompressed_size_mb": 5863
+      "uncompressed_size_mb": 6173
     },
     {
       "version": "1.18.0",
       "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.18.0-rolling-weekly",
-      "uncompressed_size_mb": 5656
+      "uncompressed_size_mb": 5966
     },
     {
       "version": "1.17.0",
       "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.17.0-rolling-weekly",
-      "uncompressed_size_mb": 5610
+      "uncompressed_size_mb": 5920
     },
     {
       "version": "1.16.1",
       "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.16.1-rolling-weekly",
-      "uncompressed_size_mb": 6554
+      "uncompressed_size_mb": 6864
     },
     {
       "version": "1.16.0",
       "image": "ghcr.io/clay-colwell/forescout-console-9.1.5:1.16.0-rolling-weekly",
-      "uncompressed_size_mb": 6484
+      "uncompressed_size_mb": 6794
     }
   ]
 }
