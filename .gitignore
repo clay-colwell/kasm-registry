@@ -48,3 +48,7 @@ test-timings.json
 # Cache
 *.tsbuildinfo
 .swc/
+
+# Temporary archives converted from vendor Console installers
+/workspaces/Forescout Console/console/.prepared/
+__pycache__/

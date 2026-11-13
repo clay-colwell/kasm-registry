@@ -20,19 +20,39 @@ def load_config():
         return json.load(stream)
 
 
+def source_version(name):
+    if name.endswith(".tar.gz") and VERSION_RE.fullmatch(name[:-7]):
+        return name[:-7]
+    match = re.fullmatch(r"(?:Forescout|CounterACT)-Console-setup-Linux-([0-9]+(?:\.[0-9]+)+)-[0-9]+(?:_Upgrade_from_[0-9]+(?:\.[0-9]+)+-[0-9]+_upward)?\.run", name)
+    if match:
+        return match.group(1)
+    raise SystemExit(f"Invalid console source name: {name}")
+
+
 def archives(validate=True, console_versions=None):
     selected = set(console_versions or [])
-    found = []
-    for archive in sorted(CONSOLE_ROOT.glob("*.tar.gz")):
-        version = archive.name[:-7]
-        if not VERSION_RE.fullmatch(version):
-            raise SystemExit(f"Invalid console archive name: {archive.name}")
+    found = {}
+    for archive in sorted(CONSOLE_ROOT.iterdir()):
+        if not archive.name.endswith((".tar.gz", ".run")):
+            continue
+        version = source_version(archive.name)
+        if version in found:
+            raise SystemExit(f"Multiple sources for Console {version}: {found[version]}, {archive.name}. Keep only one.")
+        found[version] = archive.name
+    result = []
+    for version, name in found.items():
         if selected and version not in selected:
             continue
+        archive = CONSOLE_ROOT / name
         if validate:
-            validate_archive(archive)
-        found.append((version, archive.name))
-    return found
+            if name.endswith(".tar.gz"):
+                validate_archive(archive)
+            else:
+                with archive.open("rb") as stream:
+                    if stream.read(4) != b"\x7fELF":
+                        raise SystemExit(f"Expected a Linux ELF installer (check Git LFS download): {name}")
+        result.append((version, name))
+    return result
 
 
 def validate_archive(archive):
@@ -51,7 +71,13 @@ def validate_archive(archive):
 
 
 def archive_size_mb(console_version):
-    archive = CONSOLE_ROOT / f"{console_version}.tar.gz"
+    sources = dict(archives(validate=False, console_versions=[console_version]))
+    name = sources.get(console_version)
+    if name is None:
+        raise SystemExit(f"Console source not found: {console_version}")
+    archive = CONSOLE_ROOT / name
+    if name.endswith(".run"):
+        archive = CONSOLE_ROOT / ".prepared" / f"{console_version}.tar.gz"
     if not archive.is_file():
         raise SystemExit(f"Console archive not found: {archive}")
     validate_archive(archive)

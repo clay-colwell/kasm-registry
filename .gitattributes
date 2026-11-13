@@ -1,1 +1,2 @@
 "workspaces/Forescout Console/console/*.tar.gz" filter=lfs diff=lfs merge=lfs -text
+"workspaces/Forescout Console/console/*.run" filter=lfs diff=lfs merge=lfs -text

@@ -1,14 +1,48 @@
 
 # Forescout Console Kasm workspace
 
-Add each Linux Forescout Console bundle to `console/` as `<version>.tar.gz`, for
-example `8.5.5.tar.gz` or `9.1.6.tar.gz`. The archive must contain one top-level
-folder named `Forescout Console`. Console archives use Git LFS because they can
-exceed GitHub's normal 100 MB file limit.
+Drop either of these into `workspaces/Forescout Console/console/` (the actual
+folder name contains a space, not `%20`):
+
+- A vendor installer with its original name, for example
+  `Forescout-Console-setup-Linux-9.1.7-269.run`. Older names such as
+  `CounterACT-Console-setup-Linux-8.5.6-126_Upgrade_from_8.3.0-233_upward.run`
+  are also supported.
+- A prepared `<version>.tar.gz`, for example `8.5.6.tar.gz`, containing one
+  top-level folder named `Forescout Console`.
+
+Keep **one source per Console version**. If both formats or multiple installer
+builds exist for the same version, validation fails with a message to remove
+one. Both formats use Git LFS because they exceed GitHub's normal file limit.
+Install Git LFS before committing these files (`git lfs install`).
+
+For `.run` inputs, the workflow runs the vendor installer with
+`--mode unattended --unattendedmodeui none --prefix "/home/kasm-user/Forescout Console"`
+in a disposable amd64 Debian container with networking disabled. No GUI or
+manual repackaging is needed. It checks the installed version, launcher, and
+bundled Java runtime, clears initial login preferences/fingerprints, and creates
+an ignored `.prepared/<version>.tar.gz` for the existing Dockerfile. The original
+installer is preserved; the temporary archive is not committed. Only use
+trusted vendor installers, since conversion executes their code.
+
+To convert an installer locally, including on macOS with Docker running:
+
+```bash
+python3 scripts/prepare_forescout_console.py \
+  'workspaces/Forescout Console/console/Forescout-Console-setup-Linux-9.1.7-269.run'
+```
+
+The helper prints the output path. Use `--output /path/to/9.1.7.tar.gz` to create
+a standalone archive elsewhere. It refuses to overwrite an existing output;
+remove that generated file explicitly before rerunning. Prepared archives pass
+through validation unchanged. For a manual Docker build, run this helper first
+and pass `CONSOLE_ARCHIVE=.prepared/9.1.7.tar.gz` (or the original archive filename).
+The Dockerfile consumes normalized archives; GitHub Actions performs conversion
+automatically.
 
 On a matching push, GitHub Actions:
 
-1. validates every archive and generates one registry workspace per version;
+1. discovers each source and validates selected build inputs and generates one registry workspace per version;
 2. builds an amd64 image for each Kasm/base-image combination;
 3. publishes one GHCR repository per Console version, using explicit Kasm tags
    such as `ghcr.io/clay-colwell/forescout-console-8.5.5:1.19.0-rolling-weekly`;
@@ -20,8 +54,8 @@ The same workflow checks the upstream rolling-weekly images every Monday at
 07:00 UTC (03:00 EDT, or 02:00 EST after the winter clock change). It compares
 the current base manifest digest with the digest recorded on the published
 image and skips unchanged combinations.
-An archive-only push builds only the Console versions whose `.tar.gz` files
-changed. Changes to shared image inputs rebuild every Console version.
+A source-only push builds only the Console versions whose `.tar.gz` or `.run`
+files changed. Changes to shared image inputs rebuild every Console version.
 Workspace image sizes are estimates calculated from the Console archive's
 uncompressed contents plus a calibrated per-Kasm image overhead; published
 images are not downloaded again solely for size measurement.

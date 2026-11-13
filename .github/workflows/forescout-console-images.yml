@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'workspaces/Forescout Console/console/*.tar.gz'
+      - 'workspaces/Forescout Console/console/*.run'
       - 'workspaces/Forescout Console/desktop/**'
       - 'workspaces/Forescout Console/xfce4/**'
       - 'workspaces/Forescout Console/Background.png'
@@ -12,6 +13,7 @@ on:
       - 'workspaces/Forescout Console/package_updated_console.sh'
       - 'workspaces/Forescout Console/image-config.json'
       - 'scripts/generate_forescout_workspaces.py'
+      - 'scripts/prepare_forescout_console.py'
       - '.github/workflows/forescout-console-images.yml'
   schedule:
     # GitHub schedules use UTC. 07:00 UTC is 03:00 Eastern during daylight time.
@@ -67,7 +69,11 @@ jobs:
                   version=${file##*/}
                   matrix_args+=(--console-version "${version%.tar.gz}")
                   ;;
-                workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|.github/workflows/forescout-console-images.yml)
+                workspaces/Forescout\ Console/console/*.run)
+                  version=$(python3 -c 'import sys; sys.path.insert(0, "scripts"); from generate_forescout_workspaces import source_version; print(source_version(sys.argv[1]))' "${file##*/}")
+                  matrix_args+=(--console-version "$version")
+                  ;;
+                workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|scripts/prepare_forescout_console.py|.github/workflows/forescout-console-images.yml)
                   shared_input_changed=true
                   ;;
               esac
@@ -90,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download and validate selected Console archive
+      - name: Download and validate selected Console source
         env:
           CONSOLE_ARCHIVE: ${{ matrix.console_archive }}
           CONSOLE_VERSION: ${{ matrix.console_version }}
@@ -132,6 +138,19 @@ jobs:
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Prepare selected Console archive
+        if: steps.digest.outputs.changed == 'true'
+        env:
+          CONSOLE_SOURCE: ${{ matrix.console_archive }}
+          CONSOLE_VERSION: ${{ matrix.console_version }}
+        run: |
+          python3 scripts/prepare_forescout_console.py "workspaces/Forescout Console/console/$CONSOLE_SOURCE"
+          if [[ "$CONSOLE_SOURCE" == *.run ]]; then
+            echo "CONSOLE_ARCHIVE=.prepared/$CONSOLE_VERSION.tar.gz" >> "$GITHUB_ENV"
+          else
+            echo "CONSOLE_ARCHIVE=$CONSOLE_SOURCE" >> "$GITHUB_ENV"
+          fi
+
       - name: Build and push image
         if: steps.digest.outputs.changed == 'true'
         uses: docker/build-push-action@v6
@@ -144,7 +163,7 @@ jobs:
           build-args: |
             BASE_IMAGE=${{ matrix.base_image }}
             BASE_DIGEST=${{ steps.digest.outputs.base_digest }}
-            CONSOLE_ARCHIVE=${{ matrix.console_archive }}
+            CONSOLE_ARCHIVE=${{ env.CONSOLE_ARCHIVE }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ matrix.tag }}
@@ -158,11 +177,15 @@ jobs:
           IMAGE_CHANGED: ${{ steps.digest.outputs.changed }}
           CONSOLE_VERSION: ${{ matrix.console_version }}
           KASM_VERSION: ${{ matrix.kasm_version }}
+          CONSOLE_SOURCE: ${{ matrix.console_archive }}
         run: |
           existing_size=$(jq --arg image "$TARGET_IMAGE" \
             '[.compatibility[]? | select(.image == $image) | .uncompressed_size_mb][0] // 0' \
             "$WORKSPACE_FILE" 2>/dev/null || echo 0)
           if [[ "$IMAGE_CHANGED" == true || "$existing_size" == 0 ]]; then
+            if [[ "$CONSOLE_SOURCE" == *.run && ! -f "workspaces/Forescout Console/console/.prepared/$CONSOLE_VERSION.tar.gz" ]]; then
+              python3 scripts/prepare_forescout_console.py "workspaces/Forescout Console/console/$CONSOLE_SOURCE"
+            fi
             console_size=$(python3 scripts/generate_forescout_workspaces.py --archive-size-mb "$CONSOLE_VERSION")
             overhead=$(jq --arg version "$KASM_VERSION" \
               '[.kasm_versions[] | select(.version == $version) | .estimated_overhead_mb][0]' \
