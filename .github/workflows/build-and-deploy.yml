@@ -10,6 +10,7 @@ on:
       - 'workspaces/Forescout Console/console/*.tar.gz'
       - 'workspaces/Forescout Console/console/*.run'
       - 'workspaces/Forescout Console/desktop/**'
+      - 'workspaces/Forescout Console/browser/**'
       - 'workspaces/Forescout Console/xfce4/**'
       - 'workspaces/Forescout Console/Background.png'
       - 'workspaces/Forescout Console/Icon.png'
@@ -65,7 +66,7 @@ jobs:
             }
             while IFS= read -r -d '' file; do
               case "$file" in
-                workspaces/Forescout\ Console/console/*.tar.gz|workspaces/Forescout\ Console/console/*.run|workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|scripts/prepare_forescout_console.py|.github/workflows/forescout-console-images.yml|workspaces/Bruno/*|.github/workflows/bruno-image.yml)
+                workspaces/Forescout\ Console/console/*.tar.gz|workspaces/Forescout\ Console/console/*.run|workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/browser/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|scripts/prepare_forescout_console.py|.github/workflows/forescout-console-images.yml|workspaces/Bruno/*|.github/workflows/bruno-image.yml)
                   deploy=false
                   break
                   ;;

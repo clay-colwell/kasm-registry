@@ -37,6 +37,12 @@ RUN find $HOME/Desktop -name "*.desktop" -type f -delete \
     && wget -q https://raw.githubusercontent.com/kasmtech/workspaces-images/develop/src/ubuntu/install/cleanup/cleanup.sh -O /tmp/cleanup.sh \
     && DISTRO=fedora43 bash /tmp/cleanup.sh
 
+# Keep the existing helper ID so persistent profiles selecting Chromium also benefit.
+COPY ["workspaces/Forescout Console/browser/kasm-open-browser", "/usr/local/bin/kasm-open-browser"]
+COPY ["workspaces/Forescout Console/browser/chromium.desktop", "/usr/share/xfce4/helpers/chromium.desktop"]
+RUN chmod 0755 /usr/local/bin/kasm-open-browser \
+    && sed -i -E 's@^(Exec=)(/usr/bin/)?chromium-browser([[:space:]]|$)@\1/usr/local/bin/kasm-open-browser\3@' /usr/share/applications/chromium-browser.desktop
+
 # Restore the supplied desktop files after removing the core image shortcuts.
 COPY ["workspaces/Forescout Console/desktop/*", "/home/kasm-default-profile/Desktop/"]
 RUN find "$HOME/Desktop" -name "*.desktop" -type f -exec chmod 0755 {} + \

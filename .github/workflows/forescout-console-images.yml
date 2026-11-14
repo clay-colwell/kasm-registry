@@ -6,6 +6,7 @@ on:
       - 'workspaces/Forescout Console/console/*.tar.gz'
       - 'workspaces/Forescout Console/console/*.run'
       - 'workspaces/Forescout Console/desktop/**'
+      - 'workspaces/Forescout Console/browser/**'
       - 'workspaces/Forescout Console/xfce4/**'
       - 'workspaces/Forescout Console/Background.png'
       - 'workspaces/Forescout Console/Icon.png'
@@ -73,7 +74,7 @@ jobs:
                   version=$(python3 -c 'import sys; sys.path.insert(0, "scripts"); from generate_forescout_workspaces import source_version; print(source_version(sys.argv[1]))' "${file##*/}")
                   matrix_args+=(--console-version "$version")
                   ;;
-                workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|scripts/prepare_forescout_console.py|.github/workflows/forescout-console-images.yml)
+                workspaces/Forescout\ Console/desktop/*|workspaces/Forescout\ Console/browser/*|workspaces/Forescout\ Console/xfce4/*|workspaces/Forescout\ Console/Background.png|workspaces/Forescout\ Console/Icon.png|workspaces/Forescout\ Console/Dockerfile|workspaces/Forescout\ Console/package_updated_console.sh|workspaces/Forescout\ Console/image-config.json|scripts/generate_forescout_workspaces.py|scripts/prepare_forescout_console.py|.github/workflows/forescout-console-images.yml)
                   shared_input_changed=true
                   ;;
               esac

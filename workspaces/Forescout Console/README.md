@@ -83,6 +83,26 @@ The utility cleans environment-specific and transient data, reads the updated
 version, and creates `/home/kasm-user/Downloads/<version>.tar.gz` ready to add
 to `console/`. Use a session without Persistent Profile whenever possible.
 
+## Browser launches from Console and SSO
+
+XFCE's Chromium helper and the Chromium desktop URL handlers use
+`/usr/local/bin/kasm-open-browser`. This GUI-only launcher disconnects stdin,
+stdout, and stderr from the caller. Some Console versions start `xdg-open`
+through Java and close its process pipes before Chromium starts; the upstream
+Chromium wrapper otherwise receives SIGPIPE, causing XFCE's misleading
+“Failed to execute default Web Browser: Input/output error” dialog.
+
+The standard `chromium` and `chromium-browser` commands retain their output for
+terminal use. The XFCE helper keeps the `chromium` ID, so existing persistent
+profiles using that helper benefit after their container image is updated.
+Existing running sessions must be recreated from the updated image. Custom
+per-user helper overrides may need to be reset to the Chromium helper.
+
+For a regression check, copy `tests/browser_launch_smoke.py` into a fresh
+running Kasm desktop and run it with Python 3 before opening Chromium. It
+reproduces the closed-pipe launch and checks exact URL delivery using a
+loopback HTTP server; no Enterprise Manager or SSO credentials are needed.
+
 ## Customizing Workspace for your Environment
 
 To make it easier for users to use the Forescout Console in your environment, you may wish to utilize the File Mappings feature on the workspace config to update the Console launcher shortcut to autologin to your local Forescout Console instance, create a shortcut to the Web Dashboard, pre-load `local.properties` (to avoid the redundant JRE update check on login and set other preferences) and `login.fingerprint.properties` (to avoid the fingerprint prompt on initial login). 

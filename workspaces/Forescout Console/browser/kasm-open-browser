@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Java callers can close their process pipes before XFCE starts the browser.
+# Detach GUI launches from those pipes so the Kasm wrapper cannot get SIGPIPE.
+# Do not log arguments: SSO URLs may contain authentication state.
+exec /usr/bin/chromium-browser "$@" </dev/null >/dev/null 2>&1
